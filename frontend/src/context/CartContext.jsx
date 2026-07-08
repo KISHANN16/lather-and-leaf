@@ -109,10 +109,22 @@ export const CartProvider = ({ children }) => {
 
   const itemsTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   
+  const getDiscountAmount = () => {
+    if (appliedCoupon === 'ORGANIC10') {
+      return Math.round(itemsTotal * 0.1);
+    }
+    if (appliedCoupon === 'LATHER20') {
+      return Math.round(itemsTotal * 0.2);
+    }
+    return 0;
+  };
+
+  const discountAmount = getDiscountAmount();
+
   // Delivery Charge: Free if subtotal >= ₹800, or coupon is active and subtotal >= ₹500, else ₹70
-  const isEligibleForFreeShipping = itemsTotal >= 800 || (appliedCoupon && itemsTotal >= 500);
+  const isEligibleForFreeShipping = itemsTotal >= 800 || (appliedCoupon === 'FREESHIP500' && itemsTotal >= 500);
   const deliveryCharge = isEligibleForFreeShipping || itemsTotal === 0 ? 0 : 70;
-  const totalPrice = itemsTotal + deliveryCharge;
+  const totalPrice = Math.max(0, itemsTotal - discountAmount + deliveryCharge);
 
   const applyCoupon = (code) => {
     const cleanCode = code.trim().toUpperCase();
@@ -122,6 +134,14 @@ export const CartProvider = ({ children }) => {
       }
       setAppliedCoupon(cleanCode);
       showToast(`Coupon ${cleanCode} applied! Free shipping active.`);
+      return { success: true, message: 'Coupon applied successfully!' };
+    } else if (cleanCode === 'ORGANIC10') {
+      setAppliedCoupon(cleanCode);
+      showToast(`Coupon ${cleanCode} applied! 10% discount active.`);
+      return { success: true, message: 'Coupon applied successfully!' };
+    } else if (cleanCode === 'LATHER20') {
+      setAppliedCoupon(cleanCode);
+      showToast(`Coupon ${cleanCode} applied! 20% discount active.`);
       return { success: true, message: 'Coupon applied successfully!' };
     } else {
       return { success: false, message: 'Invalid coupon code.' };
@@ -147,7 +167,8 @@ export const CartProvider = ({ children }) => {
       showToast,
       appliedCoupon,
       applyCoupon,
-      removeCoupon
+      removeCoupon,
+      discountAmount
     }}>
       {children}
       {toast && (

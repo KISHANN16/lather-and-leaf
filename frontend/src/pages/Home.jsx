@@ -3,8 +3,9 @@ import { API_URL } from '../config';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
-import { ArrowRight, Star, Heart, Truck, Landmark, RefreshCw } from 'lucide-react';
+import { ArrowRight, Star, Heart, Truck, Landmark, RefreshCw, Sparkles } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
+import SoapFinderQuiz from '../components/SoapFinderQuiz';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -18,6 +19,7 @@ const Home = () => {
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [recentFeedbacks, setRecentFeedbacks] = useState([]);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   useEffect(() => {
     // Fetch products
@@ -101,6 +103,9 @@ const Home = () => {
               </div>
               <div style={heroBtns}>
                 <Link to="/shop" style={btnPrimary}>Shop Collection <ArrowRight size={16} /></Link>
+                <button onClick={() => setIsQuizOpen(true)} style={btnHighlight} className="eye-catcher-btn">
+                  Perfect Soap Finder <Sparkles size={16} />
+                </button>
                 <a href="#featured" style={btnSecondary}>View Featured</a>
               </div>
             </div>
@@ -167,6 +172,8 @@ const Home = () => {
           </ScrollReveal>
         </div>
       </section>
+
+
 
       {/* Featured Collection Grid */}
       <section id="featured" style={featuredSection}>
@@ -307,6 +314,8 @@ const Home = () => {
         </div>
       )}
 
+      {/* Soap Finder Quiz Modal */}
+      <SoapFinderQuiz isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
     </div>
   );
 };
@@ -407,6 +416,20 @@ const btnSecondary = {
   borderRadius: '12px',
   fontWeight: '700',
   border: '1px solid rgba(74, 93, 78, 0.25)',
+};
+
+const btnHighlight = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+  backgroundColor: '#EAD8C9',
+  color: '#4A5D4E',
+  padding: '14px 28px',
+  borderRadius: '12px',
+  fontWeight: '800',
+  border: 'none',
+  cursor: 'pointer',
+  boxShadow: '0 6px 16px rgba(234, 216, 201, 0.3)',
 };
 
 const heroRight = {
@@ -688,6 +711,66 @@ const submitBtn = {
   fontWeight: '700',
   cursor: 'pointer',
   boxShadow: '0 6px 16px rgba(74, 93, 78, 0.12)',
+};
+
+const quizBannerSection = {
+  maxWidth: '1300px',
+  margin: '0 auto 80px',
+  padding: '0 24px',
+};
+
+const quizBannerGrid = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  backgroundColor: '#EAD8C9',
+  backgroundImage: 'linear-gradient(135deg, #EAD8C9 0%, #D4E2D7 100%)',
+  borderRadius: '24px',
+  padding: '40px 60px',
+  border: '1px solid rgba(74, 93, 78, 0.05)',
+  boxShadow: '0 10px 30px rgba(74, 93, 78, 0.05)',
+  flexWrap: 'wrap',
+  gap: '30px',
+};
+
+const quizBannerLeft = {
+  flex: '1 1 350px',
+  textAlign: 'left',
+};
+
+const quizBannerTitle = {
+  fontSize: '28px',
+  fontFamily: "'Playfair Display', serif",
+  color: '#1C1A19',
+  marginBottom: '8px',
+  marginTop: 0,
+};
+
+const quizBannerText = {
+  fontSize: '15px',
+  color: '#5E5A57',
+  margin: 0,
+  lineHeight: '1.5',
+};
+
+const quizBannerRight = {
+  flex: '0 0 auto',
+};
+
+const quizBannerBtn = {
+  backgroundColor: '#4A5D4E',
+  color: '#FFFDF9',
+  border: 'none',
+  padding: '14px 28px',
+  borderRadius: '12px',
+  fontWeight: '700',
+  cursor: 'pointer',
+  fontSize: '15px',
+  boxShadow: '0 6px 16px rgba(74, 93, 78, 0.15)',
+  transition: 'all 0.3s ease',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
 };
 
 export default Home;

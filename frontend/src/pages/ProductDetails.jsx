@@ -7,11 +7,32 @@ import ScrollReveal from '../components/ScrollReveal';
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, showToast } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('benefits');
+  
+  // Reviews State
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [newReviewName, setNewReviewName] = useState('');
+  const [newReviewEmail, setNewReviewEmail] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewText, setNewReviewText] = useState('');
+
+  const fetchReviews = () => {
+    fetch(`${API_URL}/api/feedback?product=${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setReviews(data);
+        setReviewsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching reviews:', err);
+        setReviewsLoading(false);
+      });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -25,10 +46,47 @@ const ProductDetails = () => {
         console.error('Error fetching product details:', err);
         setLoading(false);
       });
+
+    fetchReviews();
   }, [id]);
 
   const handleQtyChange = (val) => {
     setQuantity(Math.max(1, quantity + val));
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!newReviewText.trim()) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newReviewName,
+          email: newReviewEmail,
+          rating: newReviewRating,
+          feedback: newReviewText,
+          product: id,
+        }),
+      });
+
+      if (response.ok) {
+        showToast('Thank you! Your product review has been submitted.');
+        setNewReviewName('');
+        setNewReviewEmail('');
+        setNewReviewText('');
+        setNewReviewRating(5);
+        fetchReviews(); // Reload product reviews
+      } else {
+        showToast('Failed to submit review.');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('Error connecting to review server.');
+    }
   };
 
   const renderStars = (rating) => {
@@ -53,6 +111,11 @@ const ProductDetails = () => {
       </div>
     );
   }
+
+  const computedRating = reviews.length > 0 
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : product.rating;
+  const computedReviewCount = reviews.length > 0 ? reviews.length : product.reviews;
 
   return (
     <div style={containerStyle} className="animate-fade-in">
@@ -88,8 +151,8 @@ const ProductDetails = () => {
 
           {/* Rating */}
           <div style={ratingRow}>
-            <div style={starsWrap}>{renderStars(product.rating)}</div>
-            <span style={reviewCount}>{product.rating} / 5.0 Rating ({product.reviews} customer reviews)</span>
+            <div style={starsWrap}>{renderStars(computedRating)}</div>
+            <span style={reviewCount}>{computedRating} / 5.0 Rating ({computedReviewCount} customer reviews)</span>
           </div>
 
           {/* Pricing */}
@@ -188,6 +251,112 @@ const ProductDetails = () => {
         </div>
       </ScrollReveal>
       </div>
+
+      {/* Reviews Section */}
+      <ScrollReveal direction="up" duration={0.8}>
+        <div style={reviewsSectionStyle} className="product-reviews-section">
+          <div style={reviewsHeader}>
+            <h2 style={reviewsTitle}>Customer Reviews</h2>
+            <div style={avgRatingBox} className="glass-panel">
+              <span style={avgRatingNum}>{computedRating}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div style={starsWrap}>{renderStars(Math.round(computedRating))}</div>
+                <span style={avgRatingCount}>Based on {computedReviewCount} reviews</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={reviewsGrid} className="reviews-split-grid">
+            {/* Reviews List */}
+            <div style={reviewsListCol}>
+              {reviewsLoading ? (
+                <div style={{ color: '#5E5A57' }}>Loading customer reviews...</div>
+              ) : reviews.length === 0 ? (
+                <div style={emptyReviewsStyle} className="glass-panel">
+                  <p style={{ margin: 0, color: '#5E5A57', fontStyle: 'italic' }}>
+                    No customer reviews for this soap yet. Be the first to share your experience!
+                  </p>
+                </div>
+              ) : (
+                <div style={reviewsScrollList}>
+                  {reviews.map((rev) => (
+                    <div key={rev._id} style={reviewCardStyle} className="glass-panel">
+                      <div style={reviewCardHeader}>
+                        <span style={reviewAuthor}>{rev.name}</span>
+                        <span style={reviewStarsStyle}>{renderStars(rev.rating)}</span>
+                      </div>
+                      <p style={reviewText}>"{rev.feedback}"</p>
+                      <span style={reviewDate}>
+                        {new Date(rev.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} • Verified Buyer
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add Review Form */}
+            <div style={addReviewCol} className="glass-panel">
+              <h3 style={addReviewTitle}>Write a Review</h3>
+              <form onSubmit={handleReviewSubmit} style={reviewForm}>
+                <div style={formRow}>
+                  <div style={{ flex: 1, minWidth: '150px' }}>
+                    <label style={reviewLabel}>Your Name</label>
+                    <input
+                      type="text"
+                      required
+                      style={reviewInput}
+                      value={newReviewName}
+                      onChange={(e) => setNewReviewName(e.target.value)}
+                      placeholder="e.g. Aarav S."
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '150px' }}>
+                    <label style={reviewLabel}>Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      style={reviewInput}
+                      value={newReviewEmail}
+                      onChange={(e) => setNewReviewEmail(e.target.value)}
+                      placeholder="e.g. aarav@gmail.com"
+                    />
+                  </div>
+                </div>
+
+                <div style={formGroup}>
+                  <label style={reviewLabel}>Soap Rating</label>
+                  <select
+                     style={reviewInput}
+                     value={newReviewRating}
+                     onChange={(e) => setNewReviewRating(Number(e.target.value))}
+                  >
+                    <option value="5">5 Stars (Excellent)</option>
+                    <option value="4">4 Stars (Very Good)</option>
+                    <option value="3">3 Stars (Average)</option>
+                    <option value="2">2 Stars (Fair)</option>
+                    <option value="1">1 Star (Poor)</option>
+                  </select>
+                </div>
+
+                <div style={formGroup}>
+                  <label style={reviewLabel}>Your Experience</label>
+                  <textarea
+                    rows="4"
+                    required
+                    style={reviewTextarea}
+                    value={newReviewText}
+                    onChange={(e) => setNewReviewText(e.target.value)}
+                    placeholder="Tell us about the lather, scent, and how it feels on your skin..."
+                  />
+                </div>
+
+                <button type="submit" style={reviewSubmitBtn}>Submit Soap Review</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   );
 };
@@ -499,6 +668,198 @@ const btnPrimary = {
   borderRadius: '10px',
   fontWeight: '700',
   marginTop: '20px',
+};
+
+// Reviews Styles
+const reviewsSectionStyle = {
+  marginTop: '60px',
+  borderTop: '1px solid rgba(74, 93, 78, 0.08)',
+  paddingTop: '40px',
+  width: '100%',
+};
+
+const reviewsHeader = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '34px',
+  flexWrap: 'wrap',
+  gap: '20px',
+};
+
+const reviewsTitle = {
+  fontSize: '28px',
+  fontFamily: "'Playfair Display', serif",
+  color: '#1C1A19',
+  margin: 0,
+};
+
+const avgRatingBox = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '16px',
+  padding: '16px 24px',
+  backgroundColor: '#FFFDF9',
+  borderRadius: '16px',
+  border: '1px solid rgba(74, 93, 78, 0.08)',
+};
+
+const avgRatingNum = {
+  fontSize: '36px',
+  fontWeight: '900',
+  color: '#4A5D4E',
+  fontFamily: "'Inter', sans-serif",
+  lineHeight: 1,
+};
+
+const avgRatingCount = {
+  fontSize: '12px',
+  color: '#A09690',
+  fontWeight: '600',
+};
+
+const reviewsGrid = {
+  display: 'grid',
+  gridTemplateColumns: '1.1fr 0.9fr',
+  gap: '40px',
+  alignItems: 'start',
+};
+
+const reviewsListCol = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+};
+
+const reviewsScrollList = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+  maxHeight: '520px',
+  overflowY: 'auto',
+  paddingRight: '10px',
+};
+
+const reviewCardStyle = {
+  padding: '20px',
+  backgroundColor: '#FFFDF9',
+  borderRadius: '16px',
+  border: '1px solid rgba(74, 93, 78, 0.05)',
+  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.01)',
+};
+
+const reviewCardHeader = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '10px',
+};
+
+const reviewAuthor = {
+  fontWeight: '700',
+  color: '#1C1A19',
+  fontSize: '15px',
+};
+
+const reviewStarsStyle = {
+  display: 'flex',
+  gap: '2px',
+};
+
+const reviewText = {
+  fontStyle: 'italic',
+  color: '#5E5A57',
+  fontSize: '14.5px',
+  lineHeight: '1.6',
+  marginBottom: '10px',
+  marginTop: 0,
+};
+
+const reviewDate = {
+  fontSize: '11px',
+  fontWeight: '700',
+  color: '#4A5D4E',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+};
+
+const addReviewCol = {
+  padding: '30px',
+  backgroundColor: '#FFFDF9',
+  borderRadius: '24px',
+};
+
+const addReviewTitle = {
+  fontSize: '20px',
+  fontFamily: "'Playfair Display', serif",
+  color: '#4A5D4E',
+  marginBottom: '20px',
+  marginTop: 0,
+  fontWeight: '700',
+};
+
+const reviewForm = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+};
+
+const formRow = {
+  display: 'flex',
+  gap: '16px',
+  flexWrap: 'wrap',
+};
+
+const formGroup = {
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const reviewLabel = {
+  display: 'block',
+  fontSize: '13px',
+  fontWeight: '750',
+  marginBottom: '6px',
+  color: '#1C1A19',
+};
+
+const reviewInput = {
+  width: '100%',
+  padding: '12px 14px',
+  border: '1px solid rgba(74, 93, 78, 0.15)',
+  borderRadius: '10px',
+  outline: 'none',
+  fontSize: '14px',
+  backgroundColor: '#FFF',
+  fontFamily: "'Inter', sans-serif",
+  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.02)',
+};
+
+const reviewTextarea = {
+  ...reviewInput,
+  resize: 'vertical',
+};
+
+const reviewSubmitBtn = {
+  backgroundColor: '#4A5D4E',
+  color: '#FFFDF9',
+  padding: '14px',
+  borderRadius: '10px',
+  border: 'none',
+  fontWeight: '700',
+  cursor: 'pointer',
+  fontSize: '15px',
+  boxShadow: '0 6px 16px rgba(74, 93, 78, 0.12)',
+  transition: 'background-color 0.2s',
+  marginTop: '8px',
+};
+
+const emptyReviewsStyle = {
+  padding: '40px',
+  textAlign: 'center',
+  borderRadius: '16px',
+  backgroundColor: 'rgba(74, 93, 78, 0.02)',
+  border: '1px dashed rgba(74, 93, 78, 0.15)',
 };
 
 export default ProductDetails;

@@ -381,6 +381,9 @@ export const fallbackDB = {
         orderItems: order.orderItems,
         shippingAddress: order.shippingAddress,
         paymentMethod: order.paymentMethod,
+        paymentDetails: order.paymentDetails,
+        couponCode: order.couponCode,
+        discountAmount: order.discountAmount || 0.0,
         itemsPrice: order.itemsPrice,
         deliveryPrice: order.deliveryPrice,
         totalPrice: order.totalPrice,
@@ -429,6 +432,7 @@ export const fallbackDB = {
         rating: fb.rating || 5,
         feedback: fb.feedback,
         category: fb.category || 'General Review',
+        product: fb.product,
         createdAt: new Date().toISOString(),
       };
       data.feedbacks.push(newFb);

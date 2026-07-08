@@ -27,6 +27,10 @@ const feedbackSchema = new mongoose.Schema({
     type: String,
     enum: ['Product Feedback', 'Customer Support', 'General Review'],
     default: 'General Review',
+  },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
   }
 }, {
   timestamps: true,

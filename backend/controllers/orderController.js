@@ -14,6 +14,9 @@ const addOrderItems = async (req, res) => {
     itemsPrice,
     deliveryPrice,
     totalPrice,
+    couponCode,
+    discountAmount,
+    paymentDetails,
   } = req.body;
 
   if (global.isUsingFallback || mongoose.connection.readyState !== 1) {
@@ -29,6 +32,9 @@ const addOrderItems = async (req, res) => {
         orderItems,
         shippingAddress,
         paymentMethod,
+        paymentDetails,
+        couponCode,
+        discountAmount: Number(discountAmount) || 0.0,
         itemsPrice,
         deliveryPrice,
         totalPrice,
@@ -60,6 +66,9 @@ const addOrderItems = async (req, res) => {
       orderItems,
       shippingAddress,
       paymentMethod,
+      paymentDetails,
+      couponCode,
+      discountAmount: Number(discountAmount) || 0.0,
       itemsPrice,
       deliveryPrice,
       totalPrice,

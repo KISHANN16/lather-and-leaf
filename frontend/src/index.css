@@ -371,3 +371,112 @@ button, input, select, textarea {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Eye Catcher Effects for Soap Finder Button */
+@keyframes jiggleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 10px 24px rgba(74, 93, 78, 0.25), 0 0 0px rgba(255, 176, 133, 0);
+  }
+  12% {
+    transform: translateY(-8px) scale(1.05) rotate(-3deg);
+    box-shadow: 0 18px 36px rgba(160, 110, 82, 0.4), 0 0 15px rgba(255, 176, 133, 0.5);
+  }
+  16% {
+    transform: translateY(-8px) scale(1.05) rotate(3deg);
+    box-shadow: 0 18px 36px rgba(160, 110, 82, 0.4), 0 0 15px rgba(255, 176, 133, 0.5);
+  }
+  20% {
+    transform: translateY(-8px) scale(1.05) rotate(-3deg);
+  }
+  24% {
+    transform: translateY(-8px) scale(1.05) rotate(3deg);
+  }
+  28% {
+    transform: translateY(-8px) scale(1.05) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 14px 28px rgba(74, 93, 78, 0.3);
+  }
+}
+
+@keyframes rainbowBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes sparkleSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 2px #FFF);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.4);
+    filter: drop-shadow(0 0 8px #FFD700);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    filter: drop-shadow(0 0 2px #FFF);
+  }
+}
+
+@keyframes shineSweep {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.eye-catcher-btn {
+  background: linear-gradient(-45deg, #4A5D4E, #A06E52, #FFB085, #4A5D4E) !important;
+  background-size: 300% 300% !important;
+  color: #FFFDF9 !important;
+  animation: 
+    rainbowBorder 5s ease infinite, 
+    jiggleFloat 3s ease-in-out infinite !important;
+  box-shadow: 0 10px 25px rgba(74, 93, 78, 0.25) !important;
+  border: 2px solid rgba(255, 255, 255, 0.45) !important;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease !important;
+}
+
+.eye-catcher-btn:hover {
+  transform: scale(1.08) !important;
+  box-shadow: 0 20px 40px rgba(160, 110, 82, 0.45) !important;
+}
+
+.eye-catcher-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(25deg);
+  animation: shineSweep 4s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.eye-catcher-btn svg {
+  animation: sparkleSpin 3s linear infinite !important;
+}

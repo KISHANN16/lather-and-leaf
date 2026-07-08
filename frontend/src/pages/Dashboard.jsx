@@ -164,6 +164,38 @@ const Dashboard = () => {
                           <strong style={priceText}>₹{order.totalPrice}</strong>
                         </div>
                       </div>
+
+                      {/* Visual Order Progress Stepper */}
+                      {order.orderStatus === 'Cancelled' ? (
+                        <div style={cancelledBannerStyle}>
+                          <span>❌ This order was cancelled. Feel free to contact our customer support.</span>
+                        </div>
+                      ) : (
+                        <div style={stepperContainer}>
+                          <div style={stepStyle(true)}>
+                            <div style={stepCircleStyle(true)}>✓</div>
+                            <span style={stepLabelStyle(true)}>Placed</span>
+                          </div>
+                          
+                          <div style={stepLineStyle(order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered')}></div>
+                          
+                          <div style={stepStyle(order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered')}>
+                            <div style={stepCircleStyle(order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered')}>
+                              {order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered' ? '✓' : '2'}
+                            </div>
+                            <span style={stepLabelStyle(order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered')}>Shipped</span>
+                          </div>
+                          
+                          <div style={stepLineStyle(order.orderStatus === 'Delivered')}></div>
+                          
+                          <div style={stepStyle(order.orderStatus === 'Delivered')}>
+                            <div style={stepCircleStyle(order.orderStatus === 'Delivered')}>
+                              {order.orderStatus === 'Delivered' ? '✓' : '3'}
+                            </div>
+                            <span style={stepLabelStyle(order.orderStatus === 'Delivered')}>Delivered</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -367,6 +399,71 @@ const itemsText = {
 const priceText = {
   fontSize: '16px',
   color: '#4A5D4E',
+};
+
+// Visual Stepper Styles
+const stepperContainer = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: '24px',
+  paddingTop: '20px',
+  borderTop: '1px dashed rgba(74, 93, 78, 0.12)',
+  gap: '8px',
+};
+
+const stepStyle = (isActive) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  flex: '1',
+  position: 'relative',
+});
+
+const stepCircleStyle = (isActive) => ({
+  width: '28px',
+  height: '28px',
+  borderRadius: '50%',
+  backgroundColor: isActive ? '#4A5D4E' : '#EEF0F2',
+  color: isActive ? '#FFFDF9' : '#A09690',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '12px',
+  fontWeight: '800',
+  boxShadow: isActive ? '0 4px 10px rgba(74, 93, 78, 0.2)' : 'none',
+  transition: 'all 0.3s ease',
+});
+
+const stepLabelStyle = (isActive) => ({
+  fontSize: '11.5px',
+  fontWeight: isActive ? '800' : '650',
+  color: isActive ? '#4A5D4E' : '#A09690',
+  marginTop: '6px',
+  textAlign: 'center',
+});
+
+const stepLineStyle = (isActive) => ({
+  height: '3px',
+  flex: '2',
+  backgroundColor: isActive ? '#4A5D4E' : '#EEF0F2',
+  borderRadius: '2px',
+  margin: '0 -15px 16px -15px',
+  transition: 'all 0.3s ease',
+});
+
+const cancelledBannerStyle = {
+  marginTop: '20px',
+  padding: '12px 18px',
+  borderRadius: '10px',
+  backgroundColor: '#FFF0F0',
+  color: '#B23B3B',
+  fontWeight: '700',
+  fontSize: '13px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  border: '1px solid rgba(178, 59, 59, 0.12)',
 };
 
 export default Dashboard;

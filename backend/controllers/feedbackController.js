@@ -6,7 +6,7 @@ import { fallbackDB } from '../config/fallbackDb.js';
 // @route   POST /api/feedback
 // @access  Public
 const submitFeedback = async (req, res) => {
-  const { name, email, rating, feedback, category } = req.body;
+  const { name, email, rating, feedback, category, product } = req.body;
 
   if (global.isUsingFallback || mongoose.connection.readyState !== 1) {
     try {
@@ -15,7 +15,8 @@ const submitFeedback = async (req, res) => {
         email,
         rating,
         feedback,
-        category,
+        category: product ? 'Product Feedback' : (category || 'General Review'),
+        product,
       });
       return res.status(201).json(createdFeedback);
     } catch (error) {
@@ -25,12 +26,13 @@ const submitFeedback = async (req, res) => {
 
   try {
     const feedbackDoc = new Feedback({
-      user: req.user ? req.user._id : undefined, // Logged in user or anonymous
+      user: req.user ? req.user._id : undefined,
       name: name || 'Anonymous',
       email: email || 'anonymous@vegansoap.com',
       rating: Number(rating) || 5,
       feedback,
-      category: category || 'General Review',
+      category: product ? 'Product Feedback' : (category || 'General Review'),
+      product: product || undefined,
     });
 
     const createdFeedback = await feedbackDoc.save();
@@ -44,9 +46,16 @@ const submitFeedback = async (req, res) => {
 // @route   GET /api/feedback
 // @access  Public
 const getFeedback = async (req, res) => {
+  const { product } = req.query;
+
   if (global.isUsingFallback || mongoose.connection.readyState !== 1) {
     try {
-      const feedbackList = fallbackDB.feedbacks.find();
+      let feedbackList = fallbackDB.feedbacks.find();
+      if (product) {
+        feedbackList = feedbackList.filter((f) => f.product === product);
+      } else {
+        feedbackList = feedbackList.filter((f) => !f.product);
+      }
       return res.json(feedbackList);
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -54,7 +63,13 @@ const getFeedback = async (req, res) => {
   }
 
   try {
-    const feedbackList = await Feedback.find({}).sort({ createdAt: -1 });
+    const filter = {};
+    if (product) {
+      filter.product = product;
+    } else {
+      filter.product = { $exists: false };
+    }
+    const feedbackList = await Feedback.find(filter).sort({ createdAt: -1 });
     res.json(feedbackList);
   } catch (error) {
     res.status(500).json({ message: error.message });

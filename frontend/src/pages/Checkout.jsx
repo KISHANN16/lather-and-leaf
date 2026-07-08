@@ -7,7 +7,7 @@ import { ShieldCheck, Truck, Landmark, QrCode, CreditCard, ArrowRight, ArrowLeft
 import ScrollReveal from '../components/ScrollReveal';
 
 const Checkout = () => {
-  const { cartItems, itemsTotal, deliveryCharge, totalPrice, clearCart, appliedCoupon, applyCoupon, removeCoupon } = useCart();
+  const { cartItems, itemsTotal, deliveryCharge, totalPrice, clearCart, appliedCoupon, applyCoupon, removeCoupon, discountAmount, showToast } = useCart();
   const { user, token, updateAddress, logout } = useAuth();
   
   const navigate = useNavigate();
@@ -25,13 +25,28 @@ const Checkout = () => {
   const [pincode, setPincode] = useState('');
   const [phone, setPhone] = useState('');
 
-  // Payment form fields
+  // Payment Selection States
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [submitting, setSubmitting] = useState(false);
   const [latestOrder, setLatestOrder] = useState(null);
 
+  // Coupons State
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
+
+  // Card payment simulation states
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  // UPI payment simulation states
+  const [upiId, setUpiId] = useState('');
+
+  // Payment simulator animation stages
+  const [paymentStatus, setPaymentStatus] = useState(''); // '', 'processing', 'completed', 'failed'
+  const [paymentProgressMsg, setPaymentProgressMsg] = useState('');
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -50,6 +65,72 @@ const Checkout = () => {
     const res = applyCoupon(code);
     if (!res.success) {
       setCouponError(res.message);
+    }
+  };
+
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '');
+    const formattedValue = value.match(/.{1,4}/g)?.join(' ') || '';
+    setCardNumber(formattedValue.substring(0, 19));
+  };
+
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 2) {
+      value = `${value.substring(0, 2)}/${value.substring(2, 4)}`;
+    }
+    setCardExpiry(value.substring(0, 5));
+  };
+
+  const handleCvvChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '');
+    setCardCvv(value.substring(0, 3));
+  };
+
+  const triggerPaymentSimulation = () => {
+    if (paymentMethod === 'cod') {
+      handlePlaceOrder(null);
+      return;
+    }
+
+    if (paymentMethod === 'card') {
+      if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
+        alert('Please fill in all credit card fields.');
+        return;
+      }
+      // Start processing card payment
+      setPaymentStatus('processing');
+      setPaymentProgressMsg('Contacting payment gateway...');
+      setTimeout(() => {
+        setPaymentProgressMsg('Verifying secure 3D-Secure credentials...');
+        setTimeout(() => {
+          setPaymentProgressMsg('Processing authorization code...');
+          setTimeout(() => {
+            const cardBrand = cardNumber.startsWith('4') ? 'Visa' : cardNumber.startsWith('5') ? 'Mastercard' : 'Premium Card';
+            const last4 = cardNumber.replace(/\s/g, '').slice(-4) || '1111';
+            handlePlaceOrder({ cardBrand, last4 });
+          }, 1000);
+        }, 1000);
+      }, 1000);
+    }
+
+    if (paymentMethod === 'upi') {
+      if (!upiId) {
+        alert('Please enter a valid UPI ID (e.g. user@okhdfc).');
+        return;
+      }
+      if (!upiId.includes('@')) {
+        alert('UPI ID format must be user@bank.');
+        return;
+      }
+      setPaymentStatus('processing');
+      setPaymentProgressMsg('Waiting for UPI app authorization...');
+      setTimeout(() => {
+        setPaymentProgressMsg('Transaction approved by mobile device...');
+        setTimeout(() => {
+          handlePlaceOrder({ upiId });
+        }, 1000);
+      }, 1500);
     }
   };
 
@@ -110,7 +191,7 @@ const Checkout = () => {
     setStep('payment');
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (simulatedPaymentDetails = null) => {
     setSubmitting(true);
     
     const orderData = {
@@ -132,6 +213,9 @@ const Checkout = () => {
         phone,
       },
       paymentMethod,
+      paymentDetails: simulatedPaymentDetails,
+      couponCode: appliedCoupon || undefined,
+      discountAmount: discountAmount || 0,
       itemsPrice: itemsTotal,
       deliveryPrice: deliveryCharge,
       totalPrice: totalPrice,
@@ -169,11 +253,23 @@ const Checkout = () => {
       }
     } finally {
       setSubmitting(false);
+      setPaymentStatus('');
     }
   };
 
   return (
     <div style={containerStyle} className="container animate-fade-in">
+      {/* Simulated Secure Payment Processing Overlay */}
+      {paymentStatus === 'processing' && (
+        <div style={overlayLoaderStyle}>
+          <div style={loaderCardStyle} className="glass-panel animate-scale-up">
+            <div style={spinnerStyle}></div>
+            <h3 style={loaderTitle}>{paymentProgressMsg}</h3>
+            <p style={loaderDesc}>Please do not close this window or press the back button.</p>
+          </div>
+        </div>
+      )}
+
       {step !== 'success' && (
         <div style={stepsIndicator}>
           <div style={step === 'address' ? activeStepTab : inactiveStepTab}>
@@ -289,6 +385,12 @@ const Checkout = () => {
                   <span>Subtotal</span>
                   <span>₹{itemsTotal}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div style={{ ...totalRow, color: '#2E7D32', fontWeight: '750' }}>
+                    <span>Promo Discount ({appliedCoupon})</span>
+                    <span>-₹{discountAmount}</span>
+                  </div>
+                )}
                 <div style={totalRow}>
                   <span>Shipping Fee</span>
                   <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}</span>
@@ -324,39 +426,165 @@ const Checkout = () => {
                 </div>
               </label>
 
-              <label style={paymentOptionLabel(paymentMethod === 'gpay')}>
+              <label style={paymentOptionLabel(paymentMethod === 'card')}>
                 <input
                   type="radio"
                   name="payment"
-                  checked={paymentMethod === 'gpay'}
-                  onChange={() => setPaymentMethod('gpay')}
+                  checked={paymentMethod === 'card'}
+                  onChange={() => setPaymentMethod('card')}
                   style={radioInput}
                 />
                 <div style={optionInfo}>
-                  <strong>UPI Scan: Google Pay / PhonePe</strong>
-                  <p>Scan a mock QR code to complete payments instantly.</p>
+                  <strong>Credit / Debit Card</strong>
+                  <p>Simulate standard online merchant payments.</p>
+                </div>
+              </label>
+
+              <label style={paymentOptionLabel(paymentMethod === 'upi')}>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === 'upi'}
+                  onChange={() => setPaymentMethod('upi')}
+                  style={radioInput}
+                />
+                <div style={optionInfo}>
+                  <strong>UPI Scan: GPay / PhonePe / Paytm</strong>
+                  <p>Scan a mock QR code or use a personal UPI ID.</p>
                 </div>
               </label>
             </div>
 
-            {/* If UPI scan is selected, show mock QR code */}
-            {paymentMethod === 'gpay' && (
+            {/* If Credit Card is selected, show simulated Credit Card input & live card mockup */}
+            {paymentMethod === 'card' && (
+              <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '18px', color: '#4A5D4E', margin: 0 }}>
+                  Credit Card Gateway Simulator
+                </h3>
+
+                {/* Card Mockup */}
+                <div style={cardMockupInner(isFlipped)}>
+                  {isFlipped ? (
+                    // Card Back
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                      <div style={{ height: '40px', backgroundColor: '#000', margin: '0 -24px', marginTop: '10px' }}></div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '11px', color: '#E0DCD9' }}>CVV</span>
+                        <div style={{ backgroundColor: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '4px', fontWeight: '800', width: '60px', textAlign: 'center' }}>
+                          {cardCvv || '•••'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#A09690' }}>This card is simulated for demonstration purposes.</div>
+                    </div>
+                  ) : (
+                    // Card Front
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#D4E2D7' }}>LATHER & LEAF PREMIUM</span>
+                        <span style={{ fontSize: '18px', fontWeight: '950', fontStyle: 'italic' }}>
+                          {cardNumber.startsWith('4') ? 'Visa' : cardNumber.startsWith('5') ? 'MasterCard' : 'Debit'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '20px', letterSpacing: '2.5px', fontFamily: 'monospace', margin: '20px 0 10px' }}>
+                        {cardNumber || '•••• •••• •••• ••••'}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <div>
+                          <div style={{ fontSize: '9px', textTransform: 'uppercase', color: '#A09690' }}>Card Holder</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase' }}>{cardName || 'YOUR NAME'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '9px', textTransform: 'uppercase', color: '#A09690' }}>Expires</div>
+                          <div style={{ fontSize: '14px', fontWeight: '700' }}>{cardExpiry || 'MM/YY'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Form Fields */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={labelStyle}>Cardholder Name</label>
+                    <input
+                      type="text"
+                      required
+                      style={inputStyle}
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                      onFocus={() => setIsFlipped(false)}
+                      placeholder="E.G. REKHA VISHWAKARMA"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Card Number</label>
+                    <input
+                      type="text"
+                      required
+                      style={inputStyle}
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      onFocus={() => setIsFlipped(false)}
+                      placeholder="4111 1111 1111 1111"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Expiry Date</label>
+                      <input
+                        type="text"
+                        required
+                        style={inputStyle}
+                        value={cardExpiry}
+                        onChange={handleExpiryChange}
+                        onFocus={() => setIsFlipped(false)}
+                        placeholder="MM/YY"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>CVV Code</label>
+                      <input
+                        type="password"
+                        required
+                        style={inputStyle}
+                        value={cardCvv}
+                        onChange={handleCvvChange}
+                        onFocus={() => setIsFlipped(true)}
+                        onBlur={() => setIsFlipped(false)}
+                        placeholder="123"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* If UPI scan is selected, show mock QR code & text field */}
+            {paymentMethod === 'upi' && (
               <div style={qrContainerStyle} className="glass-panel">
                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '18px', color: '#4A5D4E', marginBottom: '10px' }}>
                   Simulated Payment QR Code
                 </h3>
                 <p style={{ fontSize: '13px', color: '#5E5A57', marginBottom: '16px' }}>
-                  Scan this QR code with any UPI app to simulate paying <strong>₹{totalPrice}</strong>.
+                  Scan this QR code with Google Pay / PhonePe to simulate paying <strong>₹{totalPrice}</strong>.
                 </p>
                 <div style={qrWrapper}>
-                  {/* Since upi-qr.jpeg is in desktop directory, we can simulate a QR code or use a placeholder */}
                   <div style={mockQrCode}>
                     <QrCode size={120} color="#4A5D4E" />
                     <span style={{ fontSize: '12px', fontWeight: '800', marginTop: '10px', color: '#4A5D4E' }}>UPI ID: merchant@vegansoap</span>
                   </div>
                 </div>
-                <div style={qrTip}>
-                  After completing the transfer in your application, click the button below to confirm your order.
+                
+                <div style={{ textAlign: 'left', marginTop: '20px' }}>
+                  <label style={labelStyle}>Or enter your UPI ID for direct request</label>
+                  <input
+                    type="text"
+                    required
+                    style={inputStyle}
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    placeholder="e.g. yourname@okaxis"
+                  />
                 </div>
               </div>
             )}
@@ -366,7 +594,7 @@ const Checkout = () => {
                 <ArrowLeft size={16} /> Back to Address
               </button>
               
-              <button onClick={handlePlaceOrder} disabled={submitting} style={actionBtn}>
+              <button onClick={triggerPaymentSimulation} disabled={submitting} style={actionBtn}>
                 {submitting ? 'Confirming Order...' : `Pay & Place Order (₹${totalPrice})`}
               </button>
             </div>
@@ -394,7 +622,7 @@ const Checkout = () => {
                 <div style={couponInputRow}>
                   <input
                     type="text"
-                    placeholder="Enter code (e.g. FREESHIP500)"
+                    placeholder="Enter code (e.g. ORGANIC10)"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
                     style={couponInputStyle}
@@ -411,6 +639,20 @@ const Checkout = () => {
             </div>
 
             <div style={totalsArea}>
+              <div style={totalRow}>
+                <span>Subtotal</span>
+                <span>₹{itemsTotal}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div style={{ ...totalRow, color: '#2E7D32', fontWeight: '700' }}>
+                  <span>Promo Discount ({appliedCoupon})</span>
+                  <span>-₹{discountAmount}</span>
+                </div>
+              )}
+              <div style={totalRow}>
+                <span>Shipping Fee</span>
+                <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}</span>
+              </div>
               <div style={finalTotalRow}>
                 <span>Order Total</span>
                 <span>₹{totalPrice}</span>
@@ -436,12 +678,30 @@ const Checkout = () => {
             <h3>Order Details</h3>
             <div style={receiptRow}>
               <span>Tracking ID:</span>
-              <strong>{latestOrder.orderId}</strong>
+              <strong style={{ color: '#4A5D4E' }}>{latestOrder.orderId}</strong>
             </div>
             <div style={receiptRow}>
               <span>Payment Type:</span>
-              <strong>{latestOrder.paymentMethod.toUpperCase()}</strong>
+              <strong style={{ textTransform: 'uppercase' }}>{latestOrder.paymentMethod}</strong>
             </div>
+            {latestOrder.paymentDetails && latestOrder.paymentDetails.cardBrand && (
+              <div style={receiptRow}>
+                <span>Card Brand / Last 4:</span>
+                <strong>{latestOrder.paymentDetails.cardBrand} •••• {latestOrder.paymentDetails.last4}</strong>
+              </div>
+            )}
+            {latestOrder.paymentDetails && latestOrder.paymentDetails.upiId && (
+              <div style={receiptRow}>
+                <span>UPI ID:</span>
+                <strong>{latestOrder.paymentDetails.upiId}</strong>
+              </div>
+            )}
+            {latestOrder.discountAmount > 0 && (
+              <div style={receiptRow}>
+                <span>Promo Discount:</span>
+                <strong style={{ color: '#2E7D32' }}>-₹{latestOrder.discountAmount} ({latestOrder.couponCode})</strong>
+              </div>
+            )}
             <div style={receiptRow}>
               <span>Total Price:</span>
               <strong>₹{latestOrder.totalPrice}</strong>
@@ -867,6 +1127,74 @@ const couponSuggestionBtn = {
   cursor: 'pointer',
   padding: 0,
   textDecoration: 'underline',
+};
+
+const cardMockupInner = (isFlipped) => ({
+  width: '100%',
+  height: '200px',
+  borderRadius: '16px',
+  backgroundColor: '#1E1E1E',
+  backgroundImage: 'linear-gradient(135deg, #1C2D22 0%, #151A18 100%)',
+  color: '#FFF',
+  padding: '24px',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
+  transition: 'all 0.4s ease',
+  position: 'relative',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxSizing: 'border-box',
+});
+
+const overlayLoaderStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(28, 26, 25, 0.7)',
+  backdropFilter: 'blur(10px)',
+  zIndex: 10000,
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: '20px',
+};
+
+const loaderCardStyle = {
+  backgroundColor: '#FFFDF9',
+  padding: '40px',
+  borderRadius: '24px',
+  maxWidth: '400px',
+  width: '100%',
+  textAlign: 'center',
+  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+  border: '1px solid rgba(74, 93, 78, 0.08)',
+};
+
+const spinnerStyle = {
+  width: '50px',
+  height: '50px',
+  border: '4px solid rgba(74, 93, 78, 0.1)',
+  borderTop: '4px solid #4A5D4E',
+  borderRadius: '50%',
+  animation: 'spin 1s linear infinite',
+  margin: '0 auto 20px',
+};
+
+const loaderTitle = {
+  fontSize: '20px',
+  fontFamily: "'Playfair Display', serif",
+  color: '#4A5D4E',
+  margin: '0 0 10px 0',
+  fontWeight: '750',
+};
+
+const loaderDesc = {
+  fontSize: '13.5px',
+  color: '#5E5A57',
+  margin: 0,
 };
 
 export default Checkout;

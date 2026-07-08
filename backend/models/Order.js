@@ -33,6 +33,19 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  paymentDetails: {
+    cardBrand: { type: String },
+    last4: { type: String },
+    upiId: { type: String },
+  },
+  couponCode: {
+    type: String,
+  },
+  discountAmount: {
+    type: Number,
+    required: true,
+    default: 0.0,
+  },
   itemsPrice: {
     type: Number,
     required: true,
