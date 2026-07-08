@@ -93,9 +93,7 @@ cd lather-and-leaf
 
 ---
 
-## 🔒 Pre-seeded Admin Credentials
+## 🔒 Admin Credentials
 
-To log in and test the Admin Panel features:
-- **Link**: `http://localhost:5173/login`
-- **Email**: `rekhavishwakarma400212@gmail.com`
-- **Password**: `adminpassword123`
+Admin credentials are created during the database seeding process. You can check or configure the default admin credentials inside the database seeding script at `backend/data/seed.js`.
+
