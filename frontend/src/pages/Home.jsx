@@ -17,6 +17,7 @@ const Home = () => {
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [recentFeedbacks, setRecentFeedbacks] = useState([]);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   useEffect(() => {
     // Fetch products
@@ -39,7 +40,7 @@ const Home = () => {
     fetch(`${API_URL}/api/feedback`)
       .then((res) => res.json())
       .then((data) => {
-        setRecentFeedbacks(data.slice(0, 2)); // Display latest 2 feedbacks
+        setRecentFeedbacks(data.slice(0, 4)); // Display latest 4 feedbacks in a grid!
       })
       .catch((err) => console.error('Error fetching feedback:', err));
   };
@@ -69,6 +70,7 @@ const Home = () => {
         setFeedbackEmail('');
         setFeedbackText('');
         setFeedbackRating(5);
+        setIsFeedbackModalOpen(false); // Close modal on success
         fetchFeedbacks(); // Reload testimonials list
       } else {
         showToast('Failed to submit feedback.');
@@ -193,103 +195,118 @@ const Home = () => {
 
       {/* Testimonials and Feedback Section */}
       <section style={testimonialSection}>
-        <div style={testimonialGrid} className="testimonial-grid">
-          {/* Testimonials List */}
-          <ScrollReveal direction="left" duration={0.8}>
-            <div style={testimonialLeft}>
-              <h2 style={{ ...sectionTitle, marginBottom: '24px' }}>What Our Customers Say</h2>
-              
-              {recentFeedbacks.length === 0 ? (
-                <div style={emptyReviews} className="glass-panel">
-                  <p>No customer reviews submitted yet. Be the first to share your experience!</p>
-                </div>
-              ) : (
-                <div style={reviewsList}>
-                  {recentFeedbacks.map((item, idx) => (
-                    <div key={item._id || idx} style={reviewCard} className="glass-panel">
-                      <div style={reviewHeader}>
-                        <span style={reviewAuthor}>{item.name}</span>
-                        <span style={reviewStars}>
-                          {Array.from({ length: item.rating }).map((_, i) => '★').join('')}
-                        </span>
-                      </div>
-                      <p style={reviewText}>"{item.feedback}"</p>
-                      <span style={reviewDate}>Verified Customer Review</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+        <ScrollReveal direction="up" duration={0.8}>
+          <div style={reviewsHeaderRow}>
+            <div>
+              <h2 style={sectionTitle}>What Our Customers Say</h2>
+              <p style={sectionSub}>Real reviews from verified members of the Lather & Leaf community.</p>
             </div>
-          </ScrollReveal>
+            <button onClick={() => setIsFeedbackModalOpen(true)} style={writeReviewBtn}>
+              ✍️ Write a Review
+            </button>
+          </div>
+          
+          {recentFeedbacks.length === 0 ? (
+            <div style={emptyReviews} className="glass-panel">
+              <p>No customer reviews submitted yet. Be the first to share your experience!</p>
+            </div>
+          ) : (
+            <div style={reviewsList} className="reviews-grid">
+              {recentFeedbacks.map((item, idx) => (
+                <div key={item._id || idx} style={reviewCard} className="glass-panel">
+                  <div style={reviewHeader}>
+                    <span style={reviewAuthor}>{item.name}</span>
+                    <span style={reviewStars}>
+                      {Array.from({ length: item.rating }).map((_, i) => '★').join('')}
+                      {Array.from({ length: 5 - item.rating }).map((_, i) => '☆').join('')}
+                    </span>
+                  </div>
+                  <p style={reviewText}>"{item.feedback}"</p>
+                  <span style={reviewDate}>Verified Customer Review</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollReveal>
+      </section>
 
-          {/* Feedback Form */}
-          <ScrollReveal direction="right" duration={0.8} delay={0.2}>
-            <div style={testimonialRight} className="glass-panel">
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '24px', marginBottom: '10px', color: '#4A5D4E' }}>
+      {/* Share Experience Modal */}
+      {isFeedbackModalOpen && (
+        <div style={modalOverlay} className="animate-fade-in">
+          <div style={modalContent} className="glass-panel animate-slide-up">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '24px', color: '#4A5D4E', margin: 0 }}>
                 Share Your Experience
               </h3>
-              <p style={{ fontSize: '14px', color: '#5E5A57', marginBottom: '20px' }}>
-                We value your thoughts! Tell us how Vegan Soap feel on your skin.
-              </p>
-              <form onSubmit={handleFeedbackSubmit}>
-                <div style={rowInput}>
-                  <div style={{ flex: 1, minWidth: '150px' }}>
-                    <label style={labelStyle}>Your Name</label>
-                    <input
-                      type="text"
-                      required
-                      style={inputStyle}
-                      value={feedbackName}
-                      onChange={(e) => setFeedbackName(e.target.value)}
-                      placeholder="Aarav S."
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: '150px' }}>
-                    <label style={labelStyle}>Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      style={inputStyle}
-                      value={feedbackEmail}
-                      onChange={(e) => setFeedbackEmail(e.target.value)}
-                      placeholder="aarav@gmail.com"
-                    />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={labelStyle}>Soap Rating</label>
-                  <select
-                    style={inputStyle}
-                    value={feedbackRating}
-                    onChange={(e) => setFeedbackRating(Number(e.target.value))}
-                  >
-                    <option value="5">5 Stars (Excellent)</option>
-                    <option value="4">4 Stars (Very Good)</option>
-                    <option value="3">3 Stars (Average)</option>
-                    <option value="2">2 Stars (Fair)</option>
-                    <option value="1">1 Star (Poor)</option>
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={labelStyle}>Your Feedback</label>
-                  <textarea
-                    rows="4"
+              <button 
+                onClick={() => setIsFeedbackModalOpen(false)} 
+                style={{ border: 'none', background: 'none', fontSize: '28px', cursor: 'pointer', color: '#A09690', lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ fontSize: '14px', color: '#5E5A57', marginBottom: '20px', marginTop: 0 }}>
+              We value your thoughts! Tell us how Vegan Soap feel on your skin.
+            </p>
+            <form onSubmit={handleFeedbackSubmit}>
+              <div style={rowInput}>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={labelStyle}>Your Name</label>
+                  <input
+                    type="text"
                     required
-                    style={textareaStyle}
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    placeholder="Share details about the scent, exfoliation texture, and moisturization..."
+                    style={inputStyle}
+                    value={feedbackName}
+                    onChange={(e) => setFeedbackName(e.target.value)}
+                    placeholder="Aarav S."
                   />
                 </div>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={labelStyle}>Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    style={inputStyle}
+                    value={feedbackEmail}
+                    onChange={(e) => setFeedbackEmail(e.target.value)}
+                    placeholder="aarav@gmail.com"
+                  />
+                </div>
+              </div>
 
-                <button type="submit" style={submitBtn}>Submit Feedback Review</button>
-              </form>
-            </div>
-          </ScrollReveal>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={labelStyle}>Soap Rating</label>
+                <select
+                  style={inputStyle}
+                  value={feedbackRating}
+                  onChange={(e) => setFeedbackRating(Number(e.target.value))}
+                >
+                  <option value="5">5 Stars (Excellent)</option>
+                  <option value="4">4 Stars (Very Good)</option>
+                  <option value="3">3 Stars (Average)</option>
+                  <option value="2">2 Stars (Fair)</option>
+                  <option value="1">1 Star (Poor)</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={labelStyle}>Your Feedback</label>
+                <textarea
+                  rows="4"
+                  required
+                  style={textareaStyle}
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Share details about the scent, exfoliation texture, and moisturization..."
+                />
+              </div>
+
+              <button type="submit" style={submitBtn}>Submit Feedback Review</button>
+            </form>
+          </div>
         </div>
-      </section>
+      )}
+
     </div>
   );
 };
@@ -520,43 +537,58 @@ const productGridStyle = {
 
 const testimonialSection = {
   maxWidth: '1300px',
-  margin: '0 auto 40px',
+  margin: '0 auto 80px',
   padding: '0 24px',
 };
 
-const testimonialGrid = {
-  display: 'grid',
-  gridTemplateColumns: '1.1fr 0.9fr',
-  gap: '40px',
+const reviewsHeaderRow = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '24px',
+  flexWrap: 'wrap',
+  gap: '16px',
 };
 
-const testimonialLeft = {
-  display: 'flex',
-  flexDirection: 'column',
+const writeReviewBtn = {
+  backgroundColor: 'transparent',
+  color: '#4A5D4E',
+  border: '2px solid #4A5D4E',
+  padding: '10px 20px',
+  borderRadius: '10px',
+  fontWeight: '700',
+  fontSize: '14.5px',
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+  fontFamily: "'Inter', sans-serif",
 };
 
 const emptyReviews = {
-  padding: '30px',
+  padding: '40px',
   textAlign: 'center',
   color: '#5E5A57',
 };
 
 const reviewsList = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '16px',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+  gap: '24px',
+  marginTop: '10px',
 };
 
 const reviewCard = {
-  padding: '20px',
+  padding: '24px',
   backgroundColor: '#FFFDF9',
+  borderRadius: '16px',
+  border: '1px solid rgba(74, 93, 78, 0.05)',
+  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.02)',
 };
 
 const reviewHeader = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: '10px',
+  marginBottom: '12px',
 };
 
 const reviewAuthor = {
@@ -576,7 +608,7 @@ const reviewText = {
   color: '#5E5A57',
   fontSize: '14px',
   lineHeight: '1.6',
-  marginBottom: '8px',
+  marginBottom: '10px',
 };
 
 const reviewDate = {
@@ -584,11 +616,35 @@ const reviewDate = {
   fontWeight: '700',
   color: '#4A5D4E',
   textTransform: 'uppercase',
+  letterSpacing: '0.5px',
 };
 
-const testimonialRight = {
+// Modal styles
+const modalOverlay = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(28, 26, 25, 0.6)',
+  backdropFilter: 'blur(8px)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+  padding: '20px',
+};
+
+const modalContent = {
+  backgroundColor: '#FFFDF9',
+  width: '100%',
+  maxWidth: '500px',
+  borderRadius: '20px',
+  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+  display: 'flex',
+  flexDirection: 'column',
   padding: '34px',
-  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  border: '1px solid rgba(74, 93, 78, 0.08)',
 };
 
 const rowInput = {
