@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Filter, SlidersHorizontal, Grid3X3, Grid2X2 } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
