@@ -257,13 +257,18 @@ const Shop = () => {
 
 // CSS in JS Shop styling
 const pageStyle = {
+  maxWidth: '1300px',
+  margin: '0 auto',
+  padding: '0 24px',
   paddingTop: '40px',
   fontFamily: "'Inter', sans-serif",
+  width: '100%',
 };
 
 const headerStyle = {
   marginBottom: '40px',
   textAlign: 'center',
+  width: '100%',
 };
 
 const titleStyle = {
@@ -284,6 +289,7 @@ const shopGridStyle = {
   display: 'grid',
   gridTemplateColumns: '280px 1fr',
   gap: '30px',
+  width: '100%',
 };
 
 const sidebarStyle = {
@@ -414,6 +420,7 @@ const productsAreaStyle = {
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
+  width: '100%',
 };
 
 const controlsBarStyle = {
@@ -451,6 +458,7 @@ const gridStyle = {
   display: 'grid',
   gridTemplateColumns: 'repeat(3, 1fr)',
   gap: '24px',
+  width: '100%',
 };
 
 const loaderStyle = {
