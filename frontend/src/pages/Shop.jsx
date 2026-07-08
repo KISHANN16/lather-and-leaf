@@ -100,57 +100,100 @@ const Shop = () => {
             <div style={filterGroup}>
               <h4 style={groupTitle}>Category</h4>
               <div style={optionsList}>
-                <label style={optionLabel}>
-                  <input
-                    type="radio"
-                    name="category"
-                    checked={categoryFilter === ''}
-                    onChange={() => setCategoryFilter('')}
-                    style={radioInput}
-                  />
-                  All Categories
-                </label>
-                {['Face Care', 'Body Care', 'Foot Care'].map((cat) => (
-                  <label key={cat} style={optionLabel}>
-                    <input
-                      type="radio"
-                      name="category"
-                      checked={categoryFilter === cat}
-                      onChange={() => setCategoryFilter(cat)}
-                      style={radioInput}
-                    />
-                    {cat}
-                  </label>
-                ))}
+                {(() => {
+                  const isAllCatSelected = categoryFilter === '';
+                  return (
+                    <div
+                      onClick={() => setCategoryFilter('')}
+                      style={{
+                        ...filterOptionRow,
+                        backgroundColor: isAllCatSelected ? 'rgba(74, 93, 78, 0.08)' : 'transparent',
+                        borderColor: isAllCatSelected ? '#4A5D4E' : 'rgba(74, 93, 78, 0.1)',
+                      }}
+                      className="filter-option"
+                    >
+                      <span style={{ 
+                        ...optionText, 
+                        color: isAllCatSelected ? '#4A5D4E' : '#5E5A57',
+                        fontWeight: isAllCatSelected ? '700' : '500'
+                      }}>
+                        All Categories
+                      </span>
+                      <div style={{
+                        ...customCheckCircle,
+                        borderColor: isAllCatSelected ? '#4A5D4E' : 'rgba(74, 93, 78, 0.3)',
+                        backgroundColor: isAllCatSelected ? '#4A5D4E' : 'transparent',
+                      }}>
+                        {isAllCatSelected && <div style={customCheckInner} />}
+                      </div>
+                    </div>
+                  );
+                })()}
+                {['Face Care', 'Body Care', 'Foot Care'].map((cat) => {
+                  const isSelected = categoryFilter === cat;
+                  return (
+                    <div
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      style={{
+                        ...filterOptionRow,
+                        backgroundColor: isSelected ? 'rgba(74, 93, 78, 0.08)' : 'transparent',
+                        borderColor: isSelected ? '#4A5D4E' : 'rgba(74, 93, 78, 0.1)',
+                      }}
+                      className="filter-option"
+                    >
+                      <span style={{ 
+                        ...optionText, 
+                        color: isSelected ? '#4A5D4E' : '#5E5A57',
+                        fontWeight: isSelected ? '700' : '500'
+                      }}>
+                        {cat}
+                      </span>
+                      <div style={{
+                        ...customCheckCircle,
+                        borderColor: isSelected ? '#4A5D4E' : 'rgba(74, 93, 78, 0.3)',
+                        backgroundColor: isSelected ? '#4A5D4E' : 'transparent',
+                      }}>
+                        {isSelected && <div style={customCheckInner} />}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Skin Type Filter */}
             <div style={filterGroup}>
               <h4 style={groupTitle}>Skin Type</h4>
-              <div style={optionsList}>
-                <label style={optionLabel}>
-                  <input
-                    type="radio"
-                    name="skinType"
-                    checked={skinTypeFilter === ''}
-                    onChange={() => setSkinTypeFilter('')}
-                    style={radioInput}
-                  />
+              <div style={optionsGrid}>
+                <button
+                  onClick={() => setSkinTypeFilter('')}
+                  style={{
+                    ...pillStyle,
+                    backgroundColor: skinTypeFilter === '' ? '#4A5D4E' : 'transparent',
+                    color: skinTypeFilter === '' ? '#FFFDF9' : '#5E5A57',
+                    borderColor: skinTypeFilter === '' ? '#4A5D4E' : 'rgba(74, 93, 78, 0.2)',
+                  }}
+                >
                   Any Skin Type
-                </label>
-                {['Oily', 'Dry', 'Sensitive', 'Normal'].map((type) => (
-                  <label key={type} style={optionLabel}>
-                    <input
-                      type="radio"
-                      name="skinType"
-                      checked={skinTypeFilter === type}
-                      onChange={() => setSkinTypeFilter(type)}
-                      style={radioInput}
-                    />
-                    {type} Skin
-                  </label>
-                ))}
+                </button>
+                {['Oily', 'Dry', 'Sensitive', 'Normal'].map((type) => {
+                  const isSelected = skinTypeFilter === type;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setSkinTypeFilter(type)}
+                      style={{
+                        ...pillStyle,
+                        backgroundColor: isSelected ? '#4A5D4E' : 'transparent',
+                        color: isSelected ? '#FFFDF9' : '#5E5A57',
+                        borderColor: isSelected ? '#4A5D4E' : 'rgba(74, 93, 78, 0.2)',
+                      }}
+                    >
+                      {type} Skin
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -280,33 +323,75 @@ const groupTitle = {
 
 const inputSearch = {
   width: '100%',
-  padding: '10px 14px',
+  padding: '12px 16px',
   border: '1px solid rgba(74, 93, 78, 0.15)',
-  borderRadius: '8px',
+  borderRadius: '12px',
   outline: 'none',
   fontSize: '14px',
   fontFamily: "'Inter', sans-serif",
+  backgroundColor: '#FFFDF9',
+  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.02)',
+  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
 };
 
 const optionsList = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '10px',
+  gap: '4px',
 };
 
-const optionLabel = {
+const filterOptionRow = {
   display: 'flex',
+  justifyContent: 'space-between',
   alignItems: 'center',
-  gap: '8px',
+  padding: '10px 14px',
+  borderRadius: '10px',
+  border: '1px solid rgba(74, 93, 78, 0.1)',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+};
+
+const optionText = {
   fontSize: '14px',
   color: '#5E5A57',
-  fontWeight: '500',
-  cursor: 'pointer',
+  transition: 'all 0.2s ease',
 };
 
-const radioInput = {
-  accentColor: '#4A5D4E',
+const customCheckCircle = {
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  border: '1.5px solid rgba(74, 93, 78, 0.3)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  transition: 'all 0.2s ease',
+};
+
+const customCheckInner = {
+  width: '6px',
+  height: '6px',
+  borderRadius: '50%',
+  backgroundColor: '#FFFDF9',
+};
+
+const optionsGrid = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '10px',
+  marginTop: '6px',
+};
+
+const pillStyle = {
+  padding: '8px 14px',
+  borderRadius: '20px',
+  border: '1px solid rgba(74, 93, 78, 0.2)',
+  fontSize: '13px',
+  fontWeight: '600',
   cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  fontFamily: "'Inter', sans-serif",
+  backgroundColor: 'transparent',
 };
 
 const clearBtn = {
