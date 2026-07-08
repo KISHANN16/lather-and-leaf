@@ -68,9 +68,18 @@ const Shop = () => {
     <div style={pageStyle} className="container animate-fade-in">
       {/* Page Header */}
       <ScrollReveal direction="down">
-        <div style={headerStyle}>
-          <h1 style={titleStyle}>Botanical Soap Collection</h1>
-          <p style={subStyle}>Discover our organic loofah and cold-pressed herbal bars for premium daily nourishment.</p>
+        <div style={headerStyle} className="shop-header-row">
+          <div style={headerLeft}>
+            <h1 style={titleStyle}>Botanical Soap Collection</h1>
+            <p style={subStyle}>Discover our organic loofah and cold-pressed herbal bars for premium daily nourishment.</p>
+          </div>
+          <div style={headerRight}>
+            <div style={breadcrumbStyle}>
+              <Link to="/" style={breadcrumbLink}>Home</Link>
+              <span style={breadcrumbSeparator}>/</span>
+              <span style={breadcrumbCurrent}>Shop</span>
+            </div>
+          </div>
         </div>
       </ScrollReveal>
 
@@ -267,22 +276,69 @@ const pageStyle = {
 
 const headerStyle = {
   marginBottom: '40px',
-  textAlign: 'center',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-end',
+  borderBottom: '1px solid rgba(74, 93, 78, 0.08)',
+  paddingBottom: '24px',
   width: '100%',
+  flexWrap: 'wrap',
+  gap: '20px',
+};
+
+const headerLeft = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  textAlign: 'left',
+};
+
+const headerRight = {
+  display: 'flex',
+  alignItems: 'center',
 };
 
 const titleStyle = {
-  fontSize: '44px',
+  fontSize: '40px',
   fontFamily: "'Playfair Display', serif",
   color: '#1C1A19',
-  marginBottom: '10px',
+  marginBottom: '8px',
+  lineHeight: '1.2',
 };
 
 const subStyle = {
-  fontSize: '16px',
+  fontSize: '15px',
   color: '#5E5A57',
-  maxWidth: '650px',
-  margin: '0 auto',
+  maxWidth: '600px',
+  margin: 0,
+  lineHeight: '1.5',
+};
+
+const breadcrumbStyle = {
+  fontSize: '14px',
+  fontWeight: '600',
+  color: '#A09690',
+  backgroundColor: 'rgba(74, 93, 78, 0.05)',
+  padding: '8px 16px',
+  borderRadius: '20px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '6px',
+};
+
+const breadcrumbLink = {
+  color: '#5E5A57',
+  textDecoration: 'none',
+  transition: 'color 0.2s',
+};
+
+const breadcrumbSeparator = {
+  color: '#A09690',
+};
+
+const breadcrumbCurrent = {
+  color: '#4A5D4E',
+  fontWeight: '700',
 };
 
 const shopGridStyle = {
